@@ -132,7 +132,7 @@ def add_cover(doc):
 
     meta = doc.add_paragraph()
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = meta.add_run("Web UI + MySQL 数据库 + Coze 工作流设计 + 本地 AI 风格分析演示")
+    run = meta.add_run("多字段摄影策划器 + MySQL 数据库 + Coze 自带大模型节点工作流")
     set_font(run, size=10.5, color="555555")
 
     home = ROOT / "output/screenshots/02-home.png"
@@ -153,46 +153,46 @@ def build():
     add_cover(doc)
 
     doc.add_heading("一、项目简介", level=1)
-    para(doc, "Image Seed 是一个面向摄影创作前期研究的 Web 应用。用户输入“家庭记忆”“城市孤独”“夜间街头”等主题后，系统生成摄影项目策划方案，并从摄影师库、摄影书库中推荐参考对象，帮助学生完成从主题选择到资料研究、拍摄计划和作品呈现的前期准备。")
-    para(doc, "本课程作业版不在网页中调用真实外部 API，也不保存 API Key。AI 分析部分使用本地规则模拟大模型输出结构，Coze 部分提供完整工作流设计和配置，用于体现大模型节点、数据库查询节点与结果整合流程。")
+    para(doc, "Image Seed 是一个面向摄影创作前期研究的 Web 应用。用户填写摄影主题、拍摄地点、拍摄对象、器材、影像风格、周期和交付形式后，系统生成摄影项目策划方案，并从摄影师库、摄影书库中推荐参考对象，帮助学生完成从主题选择到资料研究、拍摄计划和作品呈现的前期准备。")
+    para(doc, "本课程作业版不在网页中调用真实外部 API，也不保存 API Key。AI 分析部分使用本地规则模拟大模型输出结构；Coze 部分按“扣子自带大模型节点 + 数据库查询 + 结果整合”的方式提供完整工作流设计和配置。")
     table(doc, ["项目项", "说明"], [
         ["项目名称", "摄影创作研究助手（Image Seed）"],
         ["运行形式", "Web 单页应用，可通过 GitHub Pages 公网访问"],
         ["数据库", "MySQL 8.0 设计文件，含摄影师、摄影书、收藏、历史记录四张表"],
-        ["AI/工作流", "本地模拟 AI 输出；Coze 工作流配置用于课程展示和后续平台搭建"],
+        ["AI/工作流", "本地模拟 AI 输出；Coze 使用扣子自带大模型节点，配置用于课程展示和后续平台搭建"],
         ["部署链接", DEPLOY_URL],
         ["源码仓库", GITHUB_URL],
     ], widths=[1.5, 4.8])
 
     doc.add_heading("二、设计目的", level=1)
     bullets(doc, [
-        "把摄影创作前期的主题分析、参考资料查找、拍摄建议整理整合到一个界面中。",
+        "把摄影创作前期的主题分析、参考资料查找、拍摄建议、镜头清单和执行风险整合到一个界面中。",
         "满足课程对 AI 大模型、数据库、工作流和 UI 界面的综合要求。",
         "避免纯后台页面，使用真实摄影素材、明确导航和视觉化工作流，让作品更像可使用的摄影研究工具。",
-        "在不调用真实 API 的前提下，保留可迁移到 Coze 工作流的结构化输入、节点和输出格式。",
+        "在不调用真实外部 API 的前提下，保留可迁移到 Coze 自带大模型节点的结构化输入、节点和输出格式。",
     ])
 
     doc.add_heading("三、系统架构", level=1)
-    para(doc, "系统采用静态 Web 前端 + 本地数据逻辑 + MySQL 建表文件 + Coze 工作流设计的结构。线上演示由 GitHub Pages 托管，浏览器运行时只加载项目内的 HTML、CSS、JavaScript 和本地图片资源。")
+    para(doc, "系统采用静态 Web 前端 + 本地数据逻辑 + MySQL 建表文件 + Coze 工作流设计的结构。线上演示由 GitHub Pages 托管，浏览器运行时只加载项目内的 HTML、CSS、JavaScript 和本地图片资源，不依赖本地数据库服务即可演示。")
     table(doc, ["层级", "主要文件", "作用"], [
         ["UI 展示层", "index.html, styles.css, src/app.js", "登录、首页、AI 分析、摄影师推荐、摄影书推荐、收藏、历史记录页面"],
-        ["业务逻辑层", "src/core.js", "主题分析、关键词匹配、摄影师/摄影书推荐、本地 AI 风格输出"],
+        ["业务逻辑层", "src/core.js", "多字段 brief 解析、关键词匹配、摄影师/摄影书推荐、本地 AI 风格输出"],
         ["数据库设计层", "database/image_seed.sql", "MySQL 表结构和 20 条摄影师、20 条摄影书测试数据"],
-        ["工作流设计层", "docs/coze_workflow.md, docs/coze_workflow_config.json", "Coze 节点、变量、提示词、输出结构说明"],
+        ["工作流设计层", "docs/coze_workflow.md, docs/coze_workflow_config.json", "Coze 自带大模型节点、变量、提示词、输出结构说明"],
         ["素材层", "assets/photos, assets/image_sources.json", "真实摄影相关图片素材及来源记录"],
     ], widths=[1.2, 2.2, 2.9])
 
     doc.add_heading("四、工作流程说明", level=1)
     numbered(doc, [
         "用户在登录页输入用户名进入系统。",
-        "用户在首页输入摄影主题关键词，或选择预设主题标签。",
-        "系统生成 AI 风格创作分析，包括标题、概念、方向、拍摄建议、视觉元素和呈现方式。",
+        "用户在首页填写摄影主题、地点、对象、器材、风格、周期和交付形式，或选择预设主题标签。",
+        "系统生成 AI 风格创作分析，包括标题、概念、方向、拍摄建议、视觉元素、呈现方式、日程、成片清单、风险和工具包。",
         "系统根据关键词匹配摄影师数据表，展示相关摄影师。",
         "系统根据关键词匹配摄影书数据表，展示相关摄影书。",
         "用户可收藏生成方案、摄影师或摄影书。",
         "系统把每次生成记录写入浏览器 localStorage，模拟历史记录表。",
     ])
-    para(doc, "Coze 工作流对应节点：开始节点 -> 大模型分析节点 -> 摄影师数据库查询节点 -> 摄影书数据库查询节点 -> 结果整合节点 -> 历史记录节点 -> 输出节点。")
+    para(doc, "Coze 工作流对应节点：开始节点 -> 扣子自带大模型节点 - 摄影项目策划 -> 摄影师数据库查询节点 -> 摄影书数据库查询节点 -> 结果整合节点 -> 历史记录节点 -> 输出节点。")
     para(doc, "Coze 使用情况：已使用用户提供的 www.coze.cn cookie 访问 Coze，能够进入开放平台 Playground 并查看工作流、数据库相关能力入口；点击“创建”时跳转火山引擎登录页，需要账号二次登录。因此本次交付提供完整 Coze 工作流配置文件，后续登录后可按配置搭建。")
 
     doc.add_heading("五、数据库设计", level=1)
@@ -200,15 +200,15 @@ def build():
         ["photographers", "id, name, country, style, keywords, intro", "摄影师信息表，已内置至少 20 条测试数据"],
         ["photo_books", "id, title, author, theme, intro", "摄影书信息表，已内置至少 20 条测试数据"],
         ["favorites", "id, username, favorite_type, favorite_content, created_at", "收藏表，用于保存用户收藏内容"],
-        ["history_records", "id, username, keyword, ai_result, created_at", "历史记录表，用于保存生成过的主题和结果"],
+        ["history_records", "id, username, keyword, project_brief, ai_result, created_at", "历史记录表，用于保存生成过的主题、多字段项目 brief 和结果"],
     ], widths=[1.45, 2.9, 2.1])
     para(doc, "数据库文件位置：database/image_seed.sql。该文件可直接导入 MySQL 8.0，包含建库、建表和测试数据插入语句。")
 
     doc.add_heading("六、功能介绍", level=1)
     table(doc, ["页面", "功能说明"], [
         ["登录页", "简单用户名登录，进入课程演示系统。"],
-        ["首页", "输入摄影主题，展示 Coze/AI/数据库工作流程，并提供真实摄影素材图。"],
-        ["AI 分析结果页", "展示项目标题、创作概念、创作方向、拍摄建议、视觉元素和呈现方式。"],
+        ["首页", "填写多字段摄影项目 brief，展示 Coze/AI/数据库工作流程，并提供真实摄影素材图。"],
+        ["AI 分析结果页", "展示项目标题、创作概念、创作方向、拍摄建议、视觉元素、呈现方式、拍摄日程、12 张成片清单、风险提醒和现场工具包。"],
         ["摄影师推荐页", "从摄影师数据中按关键词匹配相关摄影师。"],
         ["摄影书推荐页", "从摄影书数据中按关键词匹配相关摄影书。"],
         ["收藏页", "可收藏方案、摄影师或摄影书，使用 localStorage 模拟收藏表。"],

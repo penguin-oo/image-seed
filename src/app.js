@@ -19,8 +19,24 @@
 
   let state = {
     user: readJson(storageKeys.user, null),
-    keyword: '城市孤独',
-    result: core.buildStudyResult('城市孤独'),
+    brief: {
+      theme: '家庭记忆',
+      location: '老小区和家中客厅',
+      subject: '家人、旧物和居住空间',
+      gear: '手机和微单',
+      style: '家庭档案 / 纪实',
+      duration: '3天',
+      deliverable: '课程作业组图'
+    },
+    result: core.buildStudyResult({
+      theme: '家庭记忆',
+      location: '老小区和家中客厅',
+      subject: '家人、旧物和居住空间',
+      gear: '手机和微单',
+      style: '家庭档案 / 纪实',
+      duration: '3天',
+      deliverable: '课程作业组图'
+    }),
     route: 'login'
   };
 
@@ -111,14 +127,33 @@
 
   function homePage() {
     const assets = core.getVisualAssets();
+    const b = state.brief;
     return `
       <section class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">主题研究入口</p>
-          <h2>把一个摄影关键词变成可执行的创作方案</h2>
-          <form id="researchForm" class="search-row">
-            <input id="keywordInput" value="${escapeHtml(state.keyword)}" placeholder="输入摄影主题，例如：家庭记忆">
-            <button type="submit">开始研究</button>
+          <p class="eyebrow">项目策划入口</p>
+          <h2>输入真实拍摄条件，生成一份可执行的摄影计划</h2>
+          <form id="researchForm" class="planner-form">
+            <label>摄影主题<input name="theme" value="${escapeHtml(b.theme)}" placeholder="例如：家庭记忆" required></label>
+            <label>拍摄地点<input name="location" value="${escapeHtml(b.location)}" placeholder="例如：老小区和家中客厅"></label>
+            <label>拍摄对象<input name="subject" value="${escapeHtml(b.subject)}" placeholder="例如：家人、旧物和居住空间"></label>
+            <label>器材<input name="gear" value="${escapeHtml(b.gear)}" placeholder="例如：手机和微单"></label>
+            <label>影像风格
+              <select name="style">
+                ${['家庭档案 / 纪实', '街头摄影 / 黑白', '观念摄影 / 类型学', '城市景观 / 彩色', '私人影像 / 日记'].map(item => `<option ${item === b.style ? 'selected' : ''}>${item}</option>`).join('')}
+              </select>
+            </label>
+            <label>拍摄周期
+              <select name="duration">
+                ${['1天', '3天', '1周', '2周'].map(item => `<option ${item === b.duration ? 'selected' : ''}>${item}</option>`).join('')}
+              </select>
+            </label>
+            <label>交付形式
+              <select name="deliverable">
+                ${['课程作业组图', '小型摄影书', '展览墙', '作品集页面'].map(item => `<option ${item === b.deliverable ? 'selected' : ''}>${item}</option>`).join('')}
+              </select>
+            </label>
+            <button type="submit">生成拍摄计划</button>
           </form>
           <div class="chips">
             ${['城市孤独', '家庭记忆', '夜间街头', '身体与空间', '乡村变迁', '青年亚文化'].map(item => `<button data-topic="${item}">${item}</button>`).join('')}
@@ -127,7 +162,7 @@
         <img src="${assets[0].file}" alt="${assets[0].label}">
       </section>
       <section class="workflow-band">
-        ${['用户输入关键词', 'Coze大模型分析', '查询摄影师库', '查询摄影书库', '整合研究方案', '收藏与历史'].map((item, index) => `
+        ${['填写拍摄条件', '扣子自带大模型节点', '查询摄影师库', '查询摄影书库', '生成镜头清单', '收藏与历史'].map((item, index) => `
           <article>
             <span>${String(index + 1).padStart(2, '0')}</span>
             <strong>${item}</strong>
@@ -145,11 +180,21 @@
     return `
       <header class="page-head">
         <div>
-          <p class="eyebrow">AI创作分析</p>
+          <p class="eyebrow">扣子大模型工作流 / 本地演示</p>
           <h2>${escapeHtml(a.title)}</h2>
         </div>
         <button data-favorite="analysis">收藏方案</button>
       </header>
+      <section class="brief-strip">
+        ${[
+          ['地点', a.brief.location],
+          ['对象', a.brief.subject],
+          ['器材', a.brief.gear],
+          ['风格', a.brief.style],
+          ['周期', a.brief.duration],
+          ['交付', a.brief.deliverable]
+        ].map(item => `<article><span>${item[0]}</span><strong>${escapeHtml(item[1])}</strong></article>`).join('')}
+      </section>
       <section class="analysis-grid">
         <article class="large-panel">
           <h3>创作概念</h3>
@@ -171,6 +216,31 @@
           <h3>呈现方式</h3>
           <p>${escapeHtml(a.presentation)}</p>
         </article>
+      </section>
+      <section class="planner-output">
+        <article>
+          <h3>拍摄日程</h3>
+          ${a.schedule.map(item => `<div class="timeline-row"><span>${escapeHtml(item.day)}</span><strong>${escapeHtml(item.task)}</strong><p>${escapeHtml(item.detail)}</p></div>`).join('')}
+        </article>
+        <article>
+          <h3>12张成片清单</h3>
+          <ol class="shot-list">${a.shotList.map(item => `<li><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(item.brief)}</span></li>`).join('')}</ol>
+        </article>
+        <article>
+          <h3>现场工具包</h3>
+          <div class="tag-cloud">${a.fieldKit.map(item => `<span>${escapeHtml(item)}</span>`).join('')}</div>
+        </article>
+        <article>
+          <h3>风险提醒</h3>
+          <ul>${a.risks.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+        </article>
+      </section>
+      <section class="material-wall">
+        <header>
+          <p class="eyebrow">素材参考</p>
+          <h3>真实摄影素材墙</h3>
+        </header>
+        <div>${state.result.assets.map(asset => `<figure><img src="${asset.file}" alt="${asset.label}"><figcaption>${asset.label}</figcaption></figure>`).join('')}</div>
       </section>
     `;
   }
@@ -269,13 +339,14 @@
     `;
   }
 
-  function runResearch(keyword) {
-    state.keyword = keyword;
-    state.result = core.buildStudyResult(keyword);
+  function runResearch(brief) {
+    state.brief = { ...state.brief, ...brief };
+    state.result = core.buildStudyResult(state.brief);
     const history = readJson(storageKeys.history, []);
     history.unshift({
       username: state.user.username,
-      keyword,
+      keyword: state.brief.theme,
+      brief: state.brief,
       title: state.result.analysis.title,
       result: state.result.analysis,
       createdAt: new Date().toISOString()
@@ -336,10 +407,11 @@
     });
     global.document.getElementById('researchForm')?.addEventListener('submit', event => {
       event.preventDefault();
-      runResearch(global.document.getElementById('keywordInput').value.trim() || '城市孤独');
+      const form = new FormData(event.currentTarget);
+      runResearch(Object.fromEntries(form.entries()));
     });
     global.document.querySelectorAll('[data-topic]').forEach(button => {
-      button.addEventListener('click', () => runResearch(button.dataset.topic));
+      button.addEventListener('click', () => runResearch({ theme: button.dataset.topic }));
     });
     global.document.querySelectorAll('[data-favorite]').forEach(button => {
       button.addEventListener('click', () => saveFavorite(button.dataset.favorite, button.dataset.id));

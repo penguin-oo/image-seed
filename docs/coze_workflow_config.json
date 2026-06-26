@@ -2,15 +2,58 @@
   "project": "Image Seed 摄影创作研究助手",
   "platform": "Coze / 扣子",
   "localRuntimeUsesExternalApi": false,
+  "cozeModelNode": "扣子自带大模型节点",
   "workflowName": "摄影创作研究助手 Image Seed Workflow",
-  "description": "用户输入摄影主题后，工作流完成主题分析、摄影师库查询、摄影书库查询、结果整合、历史保存和收藏入口输出。本地网页采用同结构规则模拟，不写入外部 API Key。",
+  "description": "用户填写摄影主题、地点、对象、器材、风格、周期和交付形式后，工作流通过扣子自带大模型节点生成摄影项目策划方案，再查询摄影师库和摄影书库，最后整合结果、保存历史并提供收藏入口。本地网页采用同结构规则模拟，不写入外部 API Key。",
   "inputs": [
     {
-      "name": "keyword",
+      "name": "theme",
       "type": "string",
       "required": true,
       "example": "家庭记忆",
-      "description": "摄影创作主题或关键词"
+      "description": "摄影创作主题"
+    },
+    {
+      "name": "location",
+      "type": "string",
+      "required": false,
+      "example": "老小区和家中客厅",
+      "description": "拍摄地点"
+    },
+    {
+      "name": "subject",
+      "type": "string",
+      "required": false,
+      "example": "家人、旧物和居住空间",
+      "description": "拍摄对象"
+    },
+    {
+      "name": "gear",
+      "type": "string",
+      "required": false,
+      "example": "手机和微单",
+      "description": "拍摄器材"
+    },
+    {
+      "name": "style",
+      "type": "string",
+      "required": false,
+      "example": "家庭档案 / 纪实",
+      "description": "影像风格"
+    },
+    {
+      "name": "duration",
+      "type": "string",
+      "required": false,
+      "example": "3天",
+      "description": "拍摄周期"
+    },
+    {
+      "name": "deliverable",
+      "type": "string",
+      "required": false,
+      "example": "课程作业组图",
+      "description": "最终交付形式"
     },
     {
       "name": "username",
@@ -25,14 +68,22 @@
       "id": "start",
       "type": "start",
       "name": "开始",
-      "outputs": ["keyword", "username"]
+      "outputs": ["theme", "location", "subject", "gear", "style", "duration", "deliverable", "username"]
     },
     {
-      "id": "ai_analysis",
+      "id": "coze_model_planner",
       "type": "llm",
-      "name": "摄影创作分析",
-      "input": "{{keyword}}",
-      "prompt": "你是摄影创作研究助手。请根据用户输入的摄影主题关键词，生成适合课程项目的摄影创作研究方案。必须包含项目标题、创作概念、三个创作方向、拍摄建议、可参考视觉元素、呈现方式建议。语言专业但易懂，不要空泛。",
+      "name": "扣子自带大模型节点 - 摄影项目策划",
+      "input": {
+        "theme": "{{theme}}",
+        "location": "{{location}}",
+        "subject": "{{subject}}",
+        "gear": "{{gear}}",
+        "style": "{{style}}",
+        "duration": "{{duration}}",
+        "deliverable": "{{deliverable}}"
+      },
+      "prompt": "你是摄影创作研究助手 Image Seed。请根据用户填写的摄影项目 brief，生成适合课程作业和真实拍摄执行的摄影创作研究方案。必须包含项目标题、创作概念、三个创作方向、至少四条拍摄建议、视觉元素、呈现方式、拍摄日程、12 张成片清单、风险提醒、现场工具包。语言专业但易懂，计划必须具体可执行，不要空泛。",
       "output": "analysis"
     },
     {
@@ -40,6 +91,7 @@
       "type": "database_query",
       "name": "查询摄影师库",
       "table": "photographers",
+      "matchInput": "{{theme}} {{style}} {{subject}}",
       "matchFields": ["style", "keywords", "intro"],
       "limit": 5,
       "output": "photographers"
@@ -49,6 +101,7 @@
       "type": "database_query",
       "name": "查询摄影书库",
       "table": "photo_books",
+      "matchInput": "{{theme}} {{style}} {{subject}}",
       "matchFields": ["title", "theme", "intro"],
       "limit": 5,
       "output": "books"
@@ -65,7 +118,7 @@
       "type": "database_insert",
       "name": "保存历史记录",
       "table": "history_records",
-      "fields": ["username", "keyword", "ai_result", "created_at"]
+      "fields": ["username", "keyword", "project_brief", "ai_result", "created_at"]
     },
     {
       "id": "end",
@@ -81,7 +134,23 @@
       "directions": ["string"],
       "shootingAdvice": ["string"],
       "visualElements": ["string"],
-      "presentation": "string"
+      "presentation": "string",
+      "schedule": [
+        {
+          "day": "string",
+          "task": "string",
+          "detail": "string"
+        }
+      ],
+      "shotList": [
+        {
+          "id": "number",
+          "name": "string",
+          "brief": "string"
+        }
+      ],
+      "risks": ["string"],
+      "fieldKit": ["string"]
     },
     "photographers": [
       {

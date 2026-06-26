@@ -35,6 +35,7 @@ CREATE TABLE history_records (
   id INT PRIMARY KEY AUTO_INCREMENT,
   username VARCHAR(80) NOT NULL,
   keyword VARCHAR(120) NOT NULL,
+  project_brief JSON NOT NULL,
   ai_result JSON NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

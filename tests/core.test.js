@@ -8,25 +8,46 @@ test('provides complete MySQL-backed course data shape', () => {
   const photographers = core.getPhotographers();
   const books = core.getPhotoBooks();
   const schema = core.getDatabaseSchema();
+  const sql = fs.readFileSync(path.resolve(__dirname, '..', 'database', 'image_seed.sql'), 'utf8');
 
   assert.equal(photographers.length, 20);
   assert.equal(books.length, 20);
   assert.deepEqual(Object.keys(schema.tables), ['photographers', 'photo_books', 'favorites', 'history_records']);
+  assert.ok(schema.tables.history_records.includes('project_brief'));
+  assert.match(sql, /project_brief JSON/);
 });
 
-test('generates local AI-style analysis without external API dependency', () => {
-  const result = core.generateResearch('城市孤独');
+test('generates practical planner output while using Coze built-in model design', () => {
+  const result = core.generateResearch({
+    theme: '家庭记忆',
+    location: '老小区和家中客厅',
+    subject: '家人、旧物和居住空间',
+    gear: '手机和微单',
+    style: '家庭档案 / 纪实',
+    duration: '3天',
+    deliverable: '课程作业组图'
+  });
 
   assert.equal(result.usesExternalApi, false);
-  assert.match(result.title, /城市孤独|影像|计划|研究/);
+  assert.equal(result.cozeModelNode, '扣子自带大模型节点');
+  assert.match(result.title, /家庭记忆|影像|计划|研究/);
   assert.ok(result.concept.length > 40);
   assert.equal(result.directions.length, 3);
   assert.ok(result.shootingAdvice.length >= 4);
   assert.ok(result.visualElements.length >= 5);
+  assert.ok(result.schedule.length >= 3);
+  assert.ok(result.shotList.length >= 10);
+  assert.ok(result.risks.length >= 3);
+  assert.ok(result.fieldKit.some(item => /电池|授权|道具|备份/.test(item)));
 });
 
 test('recommends relevant photographers and books from keyword matching', () => {
-  const result = core.buildStudyResult('家庭记忆');
+  const result = core.buildStudyResult({
+    theme: '家庭记忆',
+    location: '老小区',
+    subject: '家人和旧照片',
+    style: '家庭档案'
+  });
 
   assert.equal(result.photographers.length, 5);
   assert.equal(result.books.length, 5);

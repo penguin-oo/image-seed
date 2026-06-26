@@ -63,7 +63,7 @@ const databaseSchema = {
     photographers: ['id', 'name', 'country', 'style', 'keywords', 'intro'],
     photo_books: ['id', 'title', 'author', 'theme', 'intro'],
     favorites: ['id', 'username', 'favorite_type', 'favorite_content', 'created_at'],
-    history_records: ['id', 'username', 'keyword', 'ai_result', 'created_at']
+    history_records: ['id', 'username', 'keyword', 'project_brief', 'ai_result', 'created_at']
   }
 };
 
@@ -71,8 +71,35 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function normalizeBrief(input) {
+  if (typeof input === 'object' && input !== null) {
+    const theme = String(input.theme || input.keyword || '城市孤独').trim() || '城市孤独';
+    return {
+      theme,
+      keyword: theme,
+      location: String(input.location || '校园、街区或家中').trim(),
+      subject: String(input.subject || '人物、空间和物件').trim(),
+      gear: String(input.gear || '手机或微单').trim(),
+      style: String(input.style || '纪实摄影').trim(),
+      duration: String(input.duration || '3天').trim(),
+      deliverable: String(input.deliverable || '课程作业组图').trim()
+    };
+  }
+  const theme = String(input || '城市孤独').trim() || '城市孤独';
+  return {
+    theme,
+    keyword: theme,
+    location: '校园、街区或家中',
+    subject: '人物、空间和物件',
+    gear: '手机或微单',
+    style: '纪实摄影',
+    duration: '3天',
+    deliverable: '课程作业组图'
+  };
+}
+
 function tokenize(keyword) {
-  const base = String(keyword || '').trim();
+  const base = normalizeBrief(keyword).keyword;
   const map = {
     城市孤独: ['城市', '孤独', '夜晚', '街头', '空间'],
     家庭记忆: ['家庭', '记忆', '私人', '亲密', '童年'],
@@ -108,27 +135,68 @@ function recommendBooks(keyword, limit = 5) {
     .map(({ matchScore, ...item }) => item);
 }
 
+function buildSchedule(brief) {
+  const duration = brief.duration.includes('1') ? ['踩点与样片', '正式拍摄', '整理与排序'] :
+    ['资料收集与踩点', '第一次拍摄', '补拍与人物确认', '选片排序'];
+  return duration.map((stage, index) => ({
+    day: `阶段 ${index + 1}`,
+    task: stage,
+    detail: `${brief.location}：围绕${brief.subject}完成${stage}，使用${brief.gear}保持画面风格一致。`
+  }));
+}
+
+function buildShotList(brief) {
+  const base = [
+    ['建立场景', `拍摄${brief.location}的整体环境，说明项目发生的位置。`],
+    ['人物关系', `记录${brief.subject}中的主要人物或行动痕迹。`],
+    ['旧物细节', '拍摄能承载记忆的物件、照片、票据、手写文字或家具纹理。'],
+    ['空间路径', '记录门口、走廊、窗边、楼梯等连接性空间。'],
+    ['光线变化', '在清晨、黄昏或夜间各保留一张光线样本。'],
+    ['手部动作', '拍摄整理、翻看、触摸、等待等动作。'],
+    ['空镜过渡', '拍摄空椅子、桌面、墙面、床边等无人物画面。'],
+    ['档案材料', '翻拍旧照片、旧证件或家庭相册，作为资料页。'],
+    ['对比画面', '同一位置拍摄新旧、远近或有人/无人两种状态。'],
+    ['收束画面', `选择一张能指向${brief.deliverable}主题气质的结尾图。`],
+    ['备用画面', '为排版预留横构图、竖构图和留白画面。'],
+    ['标题图', '拍摄一张适合放在封面或开场的视觉主图。']
+  ];
+  return base.map((item, index) => ({ id: index + 1, name: item[0], brief: item[1] }));
+}
+
+function buildRisks(brief) {
+  return [
+    `${brief.duration}周期较短，必须先拍核心场景，再补细节。`,
+    `涉及${brief.subject}时，人物肖像和家庭材料需要提前确认授权。`,
+    `${brief.gear}拍摄时要固定色温和比例，否则组图风格会散。`,
+    `${brief.deliverable}需要统一排序逻辑，避免只堆好看的单张照片。`
+  ];
+}
+
 function generateResearch(keyword) {
-  const topic = String(keyword || '城市孤独').trim() || '城市孤独';
+  const brief = normalizeBrief(keyword);
+  const topic = brief.theme;
   const terms = tokenize(topic);
   const title = `《${topic}的影像研究计划》`;
-  const concept = `本项目将“${topic}”转化为一个摄影创作研究主题，通过连续拍摄、资料收集和图像排序，观察个体经验与社会空间之间的关系。作品不追求单张照片的奇观，而强调一组图像如何共同建立情绪、线索和叙事节奏。`;
+  const concept = `本项目将“${topic}”转化为一个可执行的摄影创作计划，围绕${brief.location}中的${brief.subject}展开拍摄，使用${brief.gear}建立稳定影像语言，并以“${brief.deliverable}”作为最终呈现目标。作品不追求单张照片的奇观，而强调一组图像如何共同建立情绪、线索和叙事节奏。`;
   const directions = [
-    `围绕“${terms[1] || topic}”寻找可重复拍摄的场景，建立清晰的系列结构。`,
-    `把人物、空间和物件作为三类线索，分别记录状态、环境和细节。`,
-    `结合文字记录、地图或旧照片材料，让作品具有研究档案感。`
+    `围绕“${terms[1] || topic}”在${brief.location}寻找可重复拍摄的场景，建立清晰的系列结构。`,
+    `把${brief.subject}拆成“人物、空间、物件、档案”四类线索，分别记录状态、环境和细节。`,
+    `结合${brief.style}的观看方式，加入文字记录、地图或旧照片材料，让作品具有研究档案感。`
   ];
   const shootingAdvice = [
+    `按${brief.duration}安排踩点、正式拍摄和补拍，不要把所有内容集中到最后一天。`,
     '选择固定时间段拍摄，例如清晨、黄昏或夜间，保持光线气质一致。',
     '采用中景和近景交替的方式，让空间关系与细节信息同时出现。',
     '每次拍摄后进行小样筛选，记录保留理由，形成可复盘的创作日志。',
-    '避免只拍“好看”的画面，优先捕捉能说明主题的动作、物件和环境痕迹。'
+    `避免只拍“好看”的画面，优先捕捉能说明${topic}的动作、物件和环境痕迹。`
   ];
   const visualElements = ['窗口', '走廊', '背影', '反光', '旧照片', '路灯', '空椅子', '手写文字', '胶片颗粒', '墙面标记'];
-  const presentation = '建议以 12-18 张组图、短文字说明和资料页组合呈现，可制作小型摄影书或展览墙。';
+  const presentation = `建议以 12-18 张组图、短文字说明和资料页组合呈现，最终整理为${brief.deliverable}。`;
   return {
     usesExternalApi: false,
-    workflowModel: 'Coze 大模型节点 / 课程演示工作流',
+    cozeModelNode: '扣子自带大模型节点',
+    workflowModel: 'Coze 扣子自带大模型节点 / 课程演示工作流',
+    brief,
     keyword: topic,
     title,
     concept,
@@ -136,6 +204,10 @@ function generateResearch(keyword) {
     shootingAdvice,
     visualElements,
     presentation,
+    schedule: buildSchedule(brief),
+    shotList: buildShotList(brief),
+    risks: buildRisks(brief),
+    fieldKit: ['备用电池', '存储卡备份', '人物授权确认', '旧照片或道具', '拍摄记录表', '移动硬盘备份'],
     generatedAt: new Date().toISOString()
   };
 }
@@ -146,7 +218,7 @@ function buildStudyResult(keyword) {
     analysis,
     photographers: recommendPhotographers(keyword),
     books: recommendBooks(keyword),
-    assets: getVisualAssets().slice(0, 6)
+    assets: getVisualAssets()
   };
 }
 
