@@ -42,6 +42,12 @@ docs/coze_workflow_config.json
 
 ## 运行
 
+公网访问：
+
+```text
+https://penguin-oo.github.io/image-seed/
+```
+
 直接打开：
 
 ```text
