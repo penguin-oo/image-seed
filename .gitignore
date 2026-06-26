@@ -1,0 +1,6 @@
+.playwright-cli/
+output/
+tmp-server.pid
+*.bak
+node_modules/
+package-lock.json

@@ -1,0 +1,104 @@
+{
+  "project": "Image Seed 摄影创作研究助手",
+  "platform": "Coze / 扣子",
+  "localRuntimeUsesExternalApi": false,
+  "workflowName": "摄影创作研究助手 Image Seed Workflow",
+  "description": "用户输入摄影主题后，工作流完成主题分析、摄影师库查询、摄影书库查询、结果整合、历史保存和收藏入口输出。本地网页采用同结构规则模拟，不写入外部 API Key。",
+  "inputs": [
+    {
+      "name": "keyword",
+      "type": "string",
+      "required": true,
+      "example": "家庭记忆",
+      "description": "摄影创作主题或关键词"
+    },
+    {
+      "name": "username",
+      "type": "string",
+      "required": false,
+      "example": "student01",
+      "description": "用于历史记录和收藏归属"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "start",
+      "type": "start",
+      "name": "开始",
+      "outputs": ["keyword", "username"]
+    },
+    {
+      "id": "ai_analysis",
+      "type": "llm",
+      "name": "摄影创作分析",
+      "input": "{{keyword}}",
+      "prompt": "你是摄影创作研究助手。请根据用户输入的摄影主题关键词，生成适合课程项目的摄影创作研究方案。必须包含项目标题、创作概念、三个创作方向、拍摄建议、可参考视觉元素、呈现方式建议。语言专业但易懂，不要空泛。",
+      "output": "analysis"
+    },
+    {
+      "id": "query_photographers",
+      "type": "database_query",
+      "name": "查询摄影师库",
+      "table": "photographers",
+      "matchFields": ["style", "keywords", "intro"],
+      "limit": 5,
+      "output": "photographers"
+    },
+    {
+      "id": "query_books",
+      "type": "database_query",
+      "name": "查询摄影书库",
+      "table": "photo_books",
+      "matchFields": ["title", "theme", "intro"],
+      "limit": 5,
+      "output": "books"
+    },
+    {
+      "id": "merge_result",
+      "type": "code_or_transform",
+      "name": "整合研究结果",
+      "input": ["analysis", "photographers", "books"],
+      "output": "research_result"
+    },
+    {
+      "id": "save_history",
+      "type": "database_insert",
+      "name": "保存历史记录",
+      "table": "history_records",
+      "fields": ["username", "keyword", "ai_result", "created_at"]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "name": "输出方案",
+      "input": "research_result"
+    }
+  ],
+  "outputSchema": {
+    "analysis": {
+      "title": "string",
+      "concept": "string",
+      "directions": ["string"],
+      "shootingAdvice": ["string"],
+      "visualElements": ["string"],
+      "presentation": "string"
+    },
+    "photographers": [
+      {
+        "name": "string",
+        "country": "string",
+        "style": "string",
+        "intro": "string"
+      }
+    ],
+    "books": [
+      {
+        "title": "string",
+        "author": "string",
+        "theme": "string",
+        "intro": "string"
+      }
+    ]
+  },
+  "cozeLoginStatus": "已尝试使用用户提供的 www.coze.cn cookie 进入 Coze；可访问开放平台 Playground，点击创建资源时跳转火山引擎登录，需要账号二次登录后才能在画布中实际保存工作流。"
+}

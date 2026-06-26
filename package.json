@@ -1,0 +1,9 @@
+{
+  "name": "image-seed",
+  "version": "1.0.0",
+  "private": true,
+  "description": "摄影创作研究助手课程项目",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

@@ -1,0 +1,78 @@
+# 摄影创作研究助手 Image Seed
+
+这是《人工智能模型应用实践》课程项目。系统面向摄影创作前期研究，用户输入摄影主题关键词后，页面生成摄影项目策划方案，并结合摄影师库和摄影书库给出参考资料。
+
+本课程作业版不在本地网页中调用真实外部 API。AI 分析由本地规则模拟，Coze 工作流文档用于说明大模型节点、数据库查询节点和结果整合流程。
+
+## 功能
+
+- 登录页：输入用户名进入系统
+- 首页：输入摄影主题关键词
+- AI 分析结果页：展示标题、创作概念、方向、拍摄建议和视觉元素
+- 摄影师推荐页：展示数据库匹配摄影师
+- 摄影书推荐页：展示数据库匹配摄影书
+- 收藏页：使用浏览器 localStorage 模拟收藏表
+- 历史记录页：使用浏览器 localStorage 模拟历史记录表
+
+## 数据库
+
+数据库文件：
+
+```text
+database/image_seed.sql
+```
+
+包含：
+
+- `photographers`：20 条摄影师测试数据
+- `photo_books`：20 条摄影书测试数据
+- `favorites`：收藏表
+- `history_records`：历史记录表
+
+## Coze 工作流
+
+工作流说明：
+
+```text
+docs/coze_workflow.md
+docs/coze_workflow_config.json
+```
+
+已尝试使用用户提供的 Coze cookie 访问平台。当前可进入 Coze 开放平台 Playground，能够查看工作流、数据库等能力入口；点击创建资源时平台跳转到火山引擎登录页，需要账号二次登录后才能在画布中保存工作流。因此源码中提供完整工作流配置，课程演示时可按该配置在 Coze 画布搭建。
+
+## 运行
+
+直接打开：
+
+```text
+index.html
+```
+
+或启动本地静态服务：
+
+```powershell
+node server.cjs 8788 127.0.0.1
+```
+
+访问：
+
+```text
+http://127.0.0.1:8788/index.html
+```
+
+## 测试
+
+```powershell
+npm test
+node --check src/core.js
+node --check src/app.js
+node --check server.cjs
+```
+
+## 素材来源
+
+页面图片来自 Wikimedia Commons，来源记录见：
+
+```text
+assets/image_sources.json
+```
